@@ -1,3 +1,5 @@
+import java.util.Properties
+
 pluginManagement {
     repositories {
         google {
@@ -23,11 +25,20 @@ dependencyResolutionManagement {
             }
             credentials {
                 username = "mapbox"
-                password = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").get()
+                password = getMapboxDownloadToken()
             }
         }
     }
 }
 
+fun getMapboxDownloadToken(): String{
+    val localProps = Properties().apply {
+        val file = file("local.properties")
+        if (file.exists()) load(file.inputStream())
+    }
+    return localProps.getProperty("MAPBOX_DOWNLOADS_TOKEN")
+        ?: System.getenv("MAPBOX_DOWNLOADS_TOKEN")
+        ?: ""
+}
 rootProject.name = "VoltWay"
 include(":app")

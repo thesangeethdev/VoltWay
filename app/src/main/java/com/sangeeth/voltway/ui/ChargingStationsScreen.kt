@@ -1,6 +1,5 @@
 package com.sangeeth.voltway.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,16 +20,16 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
-import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.locationcomponent.createDefault2DPuck
-import com.mapbox.maps.plugin.LocationPuck2D
-import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
+import com.mapbox.maps.MapInitOptions
+import com.mapbox.maps.ResourceOptions
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotationManager
 import com.mapbox.maps.plugin.annotation.generated.createPolylineAnnotationManager
+import com.sangeeth.voltway.BuildConfig
 import com.sangeeth.voltway.model.Feature
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,7 +75,7 @@ fun ChargingStationsScreen(
                 }
             } else {
                 // Empty sheet content or navigation info could go here
-                Box(modifier = Modifier.height(1.dp)) 
+                Box(modifier = Modifier.height(1.dp))
             }
         }
     ) { padding ->
@@ -84,27 +83,35 @@ fun ChargingStationsScreen(
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { context ->
-                    MapView(context).apply {
+                    val mapInitOptions = MapInitOptions(
+                        context = context,
+                        resourceOptions = ResourceOptions.Builder()
+                            .accessToken(BuildConfig.MAPBOX_ACCESS_TOKEN)
+                            .build()
+                    )
+
+                    MapView(context, mapInitOptions).apply {
                         getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS) {
                             location.updateSettings {
                                 enabled = true
                                 locationPuck = location.createDefault2DPuck(context, withBearing = true)
                             }
                         }
-                        
+
                         getMapboxMap().setCamera(
                             CameraOptions.Builder()
-                                .center(selectedLocation ?: com.mapbox.geojson.Point.fromLngLat(-122.0, 37.0))
+                                .center(
+                                    selectedLocation ?: com.mapbox.geojson.Point.fromLngLat(-122.0, 37.0)
+                                )
                                 .zoom(if (isNavigating) 15.0 else 11.0)
                                 .pitch(if (isNavigating) 45.0 else 0.0)
                                 .build()
                         )
-                        
-                        // Initialize manager once
+
                         polylineAnnotationManager = annotations.createPolylineAnnotationManager()
                     }
                 },
-                update = { mapView ->
+                update = { mapView ->   // ← comma here, inside the same AndroidView(...)
                     val mapboxMap = mapView.getMapboxMap()
                     selectedLocation?.let { point ->
                         mapboxMap.setCamera(
@@ -116,7 +123,6 @@ fun ChargingStationsScreen(
                         )
                     }
 
-                    // Handle route line drawing using the persistent manager
                     polylineAnnotationManager?.let { manager ->
                         manager.deleteAll()
                         if (routePoints.isNotEmpty()) {
@@ -215,9 +221,9 @@ fun StationCard(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             if (props.metadata?.phone != null || props.metadata?.website != null) {
                 Text(
                     text = props.metadata?.phone ?: props.metadata?.website ?: "",

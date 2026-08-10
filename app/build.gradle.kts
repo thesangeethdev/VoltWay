@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -17,6 +19,15 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        val localProperties = Properties().apply {
+            val file = rootProject.file("local.properties")
+            if (file.exists()) load(file.inputStream())
+        }
+        val mapboxAccessToken = localProperties.getProperty("MAPBOX_ACCESS_TOKEN")
+            ?: System.getenv("MAPBOX_ACCESS_TOKEN")
+            ?: ""
+        buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"$mapboxAccessToken\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -34,6 +45,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
@@ -64,10 +76,10 @@ dependencies {
     implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
-    
+
     // Mapbox SDKs
     implementation("com.mapbox.mapboxsdk:mapbox-sdk-turf:7.9.0")
-    
+
     // Mapbox Navigation SDK from libs
     implementation(libs.mapbox.navigation)
     implementation(libs.mapbox.navigation.ui)

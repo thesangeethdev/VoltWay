@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.viewbinding.BuildConfig
 import kotlinx.coroutines.*
 import com.sangeeth.voltway.location.LocationProvider
 import com.sangeeth.voltway.network.MapboxService
@@ -30,11 +31,13 @@ import com.mapbox.navigation.base.trip.model.RouteProgress
 import com.mapbox.navigation.base.trip.model.RouteLegProgress
 import com.mapbox.geojson.Point
 import com.mapbox.turf.TurfTransformation
+import kotlin.getValue
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mapboxNavigation: MapboxNavigation
-    private val accessToken by lazy { getString(R.string.mapbox_access_token) }
-    
+//    private val accessToken by lazy { getString(R.string.mapbox_access_token) }
+    private val accessToken by lazy { com.sangeeth.voltway.BuildConfig.MAPBOX_ACCESS_TOKEN }
+
     // Observer for arrival events
     private val arrivalObserver = object : ArrivalObserver {
         override fun onFinalDestinationArrival(routeProgress: RouteProgress) {
@@ -145,6 +148,13 @@ class MainActivity : AppCompatActivity() {
                                 isNavigating = isNavigating,
                                 routePoints = routePoints,
                                 onNavigateTo = { latDest, lngDest ->
+                                    if (ContextCompat.checkSelfPermission(
+                                        this@MainActivity,
+                                            Manifest.permission.ACCESS_FINE_LOCATION
+                                    ) != PackageManager.PERMISSION_GRANTED){
+                                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                                        return@ChargingStationsScreen
+                                    }
                                     selectedLatLng = latDest to lngDest
                                     isNavigating = true
                                     
