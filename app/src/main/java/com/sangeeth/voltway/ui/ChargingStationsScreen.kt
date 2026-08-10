@@ -25,6 +25,7 @@ import com.mapbox.maps.plugin.locationcomponent.createDefault2DPuck
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapInitOptions
 import com.mapbox.maps.ResourceOptions
+import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotationManager
@@ -37,45 +38,36 @@ import com.sangeeth.voltway.model.Feature
 fun ChargingStationsScreen(
     stations: List<Feature>,
     selectedLocation: com.mapbox.geojson.Point?,
-    isNavigating: Boolean = false,
-    routePoints: List<Point> = emptyList(),
     onNavigateTo: (Double, Double) -> Unit,
-    onCancelNavigation: (() -> Unit)? = null
 ) {
     val scaffoldState = rememberBottomSheetScaffoldState()
-    var polylineAnnotationManager by remember { mutableStateOf<PolylineAnnotationManager?>(null) }
-    
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
-        sheetPeekHeight = if (isNavigating) 0.dp else 160.dp, // Hide list during navigation
+        sheetPeekHeight = 160.dp,
         sheetContainerColor = Color(0xFF1C1C1E),
         sheetContentColor = Color.White,
         containerColor = Color.Transparent,
         sheetContent = {
-            if (!isNavigating) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp)
-                ) {
-                    item {
-                        Text(
-                            text = "Nearby Stations (${stations.size})",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                    items(stations) { feature ->
-                        StationCard(feature = feature, onNavigate = { lat, lng ->
-                            onNavigateTo(lat, lng)
-                        })
-                    }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            ) {
+                item {
+                    Text(
+                        text = "Nearby Stations (${stations.size})",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
-            } else {
-                // Empty sheet content or navigation info could go here
-                Box(modifier = Modifier.height(1.dp))
+                items(stations) { feature ->
+                    StationCard(feature = feature, onNavigate = { lat, lng ->
+                        onNavigateTo(lat, lng)
+                    })
+                }
             }
         }
     ) { padding ->
@@ -100,84 +92,27 @@ fun ChargingStationsScreen(
 
                         getMapboxMap().setCamera(
                             CameraOptions.Builder()
-                                .center(
-                                    selectedLocation ?: com.mapbox.geojson.Point.fromLngLat(-122.0, 37.0)
-                                )
-                                .zoom(if (isNavigating) 15.0 else 11.0)
-                                .pitch(if (isNavigating) 45.0 else 0.0)
+                                .center(selectedLocation ?: Point.fromLngLat(-122.0, 37.0))
+                                .zoom(11.0)
                                 .build()
                         )
-
-                        polylineAnnotationManager = annotations.createPolylineAnnotationManager()
                     }
                 },
-                update = { mapView ->   // ← comma here, inside the same AndroidView(...)
-                    val mapboxMap = mapView.getMapboxMap()
+                update = { mapView ->
                     selectedLocation?.let { point ->
-                        mapboxMap.setCamera(
+                        mapView.getMapboxMap().flyTo(
                             CameraOptions.Builder()
                                 .center(point)
-                                .zoom(if (isNavigating) 16.0 else 14.0)
-                                .pitch(if (isNavigating) 60.0 else 0.0)
+                                .zoom(14.0)
                                 .build()
                         )
-                    }
-
-                    polylineAnnotationManager?.let { manager ->
-                        manager.deleteAll()
-                        if (routePoints.isNotEmpty()) {
-                            val polylineAnnotationOptions = PolylineAnnotationOptions()
-                                .withPoints(routePoints)
-                                .withLineColor("#007AFF")
-                                .withLineWidth(6.0)
-                            manager.create(polylineAnnotationOptions)
-                        }
                     }
                 }
             )
-
-            if (isNavigating) {
-                // Navigation Overlay
-                Surface(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 48.dp, start = 16.dp, end = 16.dp)
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color(0xFF1C1C1E).copy(alpha = 0.9f),
-                    tonalElevation = 8.dp
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Navigating to Station",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Follow the route on the map",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.LightGray
-                            )
-                        }
-                        Button(
-                            onClick = { onCancelNavigation?.invoke() },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Red
-                            )
-                        ) {
-                            Text("Exit")
-                        }
-                    }
-                }
-            }
         }
     }
 }
+
 
 @Composable
 fun StationCard(
@@ -242,7 +177,7 @@ fun StationCard(
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
-                    onClick = { 
+                    onClick = {
                         val lat = props.coordinates?.latitude ?: feature.geometry.coordinates[1]
                         val lng = props.coordinates?.longitude ?: feature.geometry.coordinates[0]
                         onNavigate(lat, lng)
