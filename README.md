@@ -7,9 +7,7 @@ VoltWay is your simple and smart companion for finding electric vehicle (EV) cha
 - 📍 **Find Nearby Stations:** Automatically finds charging stations based on your current location.
 - 🗺️ **Live Map:** See yourself and charging stations on a beautiful, interactive Mapbox map.
 - 🧭 **Orientation Indicator:** A helpful arrow follows your location, showing you exactly which way you are facing.
-- 🛣️ **Route Drawing:** Pick a station and see a clear blue path drawn directly to your destination.
-- 🔔 **Arrival Alerts:** Get notified the moment you arrive at the charging station.
-- 📱 **Clean Interface:** Designed with a modern, dark-mode look that is easy on the eyes.
+- 📱 **MVVM Architecture** Designed with a modern architecture, light-mode look that is easy on the eyes.
 
 ## Video Walkthrough
 
@@ -41,3 +39,21 @@ VoltWay is built with modern Android tools:
 
 ---
 Made with ❤️ for EV drivers everywhere.
+
+## License
+
+    Copyright 2026 Sangeeth Amirthanathan, Voltway
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+
